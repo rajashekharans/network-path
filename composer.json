@@ -1,0 +1,32 @@
+{
+    "name": "rajashekharans/network-path-app",
+    "authors": [
+        {
+            "name": "Rajashekharan Naidu",
+            "email": "reachtoraj@outlook.com"
+        }
+    ],
+    "require": {
+        "pimple/pimple": "^3.5",
+        "symfony/console": "^6.1"
+    },
+    "config": {
+        "preferred-install": {
+            "*": "dist"
+        },
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "NetworkPath\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "NetworkPath\\Tests\\Unit\\": "tests/unit/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    }
+}
