@@ -25,6 +25,11 @@ class AdjacentNetworkPathInfo
     private $visited = false;
 
     /**
+     * @var string
+     */
+    private $hashKey;
+
+    /**
      * @return string
      */
     public function getDeviceTo(): string
@@ -86,5 +91,21 @@ class AdjacentNetworkPathInfo
     public function setDeviceFrom(string $deviceFrom): void
     {
         $this->deviceFrom = $deviceFrom;
+    }
+
+    /**
+     * @return string
+     */
+    public function getHashKey(): string
+    {
+        return $this->hashKey;
+    }
+
+    /**
+     * @param string $hashKey
+     */
+    public function setHashKey(string $hashKey): void
+    {
+        $this->hashKey = $hashKey;
     }
 }

@@ -72,6 +72,8 @@ class NetworkPathService
                         $row[self::COLUMN_LATENCY]
                     );
                 }
+
+                $this->networkPathInfoCollection->printNetworkInfoCollection();
                 fclose($fp);
             }
         } catch (Exception $exception) {
@@ -103,6 +105,7 @@ class NetworkPathService
         return self::MESSAGE_PATH_NOT_FOUND;
     }
 
+
     /**
      * @param $networkInfo
      * @param $latency
@@ -111,14 +114,15 @@ class NetworkPathService
      */
     public function traverseTheGraph($networkInfo, $latency, $result): string
     {
-        echo sprintf('%s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
+        $this->networkPathInfoCollection->printNetworkInfoCollection();
         if (!empty($networkInfo)){
-            print_r($networkInfo);
-            foreach($networkInfo->getDeviceTo() as $adjacentNetworkInfo){//C,b,e
-                echo "Checking ". $adjacentNetworkInfo->getDeviceTo().PHP_EOL;
-                $adjacentNode = $this->getAdjacentNode($networkInfo->getDeviceFrom(), $adjacentNetworkInfo);
 
+            foreach($networkInfo->getDeviceTo() as $adjacentNetworkInfo){//C,b,e
+
+                $adjacentNode = $this->networkPathInfoCollection->getAdjacentNode($networkInfo->getDeviceFrom(), $adjacentNetworkInfo);
+                echo "Checking ". $adjacentNode.PHP_EOL;
                 if ($adjacentNetworkInfo->isVisited()){
+                    echo "Already visited Skipping node => ".$adjacentNode.PHP_EOL;
                     continue;
                 }
                 $adjacentNetworkInfo->setVisited(true);
@@ -126,19 +130,28 @@ class NetworkPathService
                     echo "Adding the node ".$adjacentNode.PHP_EOL;
                     $latency[] = $adjacentNetworkInfo->getLatency();
                     $result[] = $adjacentNode;
+                    echo sprintf('After adding the node %s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
                     if ($adjacentNode == $this->deviceTo) {
-                        if ((array_sum($latency) + $adjacentNetworkInfo->getLatency()) <= $this->latency) {
-
+                        if (array_sum($latency) <= $this->latency) {
                             return sprintf('%s => %s', implode(' => ', $result), array_sum($latency));
                         }
                     } else {
                         echo " Getting network info for =>=> ".$adjacentNode.PHP_EOL;
+                        if(array_sum($latency) >= $this->latency){
+                            echo sprintf('+++Before popping %s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
+                            array_pop($latency);
+                            array_pop($result);
+                            echo sprintf('+++++After popping %s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
+
+                            $adjacentNode = $result[count($result) - 1];
+                        }
                         $networkInfo = $this->networkPathInfoCollection->findDeviceFrom($adjacentNode);
                         return $this->traverseTheGraph($networkInfo, $latency, $result);
                     }
                 }
             }
-
+            echo " ???????????????????".PHP_EOL;
+            $this->networkPathInfoCollection->printNetworkInfoCollection();
             echo sprintf('Before popping %s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
             array_pop($latency);
             array_pop($result);
@@ -147,59 +160,14 @@ class NetworkPathService
             if (count($latency) > 0 && count($result) > 0){
                 echo " Getting network info for ".$result[count($result) - 1].PHP_EOL;
                 $networkInfo = $this->networkPathInfoCollection->findDeviceFrom($result[count($result) - 1]);
-               // print_r($networkInfo);
-
-                print_r($networkInfo);
+                $this->networkPathInfoCollection->printNetworkInfoCollection();
                 return $this->traverseTheGraph($networkInfo, $latency, $result);
             }
         }
-        echo sprintf('%s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
+        //echo sprintf('%s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
         return self::MESSAGE_PATH_NOT_FOUND;
     }
 
-    public function traverseTheGraphNew($networkInfo, $latency, $result): string
-    {
-        echo sprintf('%s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
-        if (!empty($networkInfo)){
-            for($node = 0; $node < count($networkInfo->getDeviceTo()) ; $node++){
-                //print_r($adjacentNetworkInfo);
-                $adjacentNode = $networkInfo->getDeviceTo()[$node];
-
-                if($adjacentNode->getDeviceTo() == $this->deviceTo){
-                    if((array_sum($latency) + $adjacentNode->getLatency()) <= $this->latency){
-                        $latency[] = $adjacentNode->getLatency();
-                        $result[] = $adjacentNode->getDeviceTo();
-                        return sprintf('%s => %s', implode(' => ', $result), array_sum($latency));
-                    }
-                } else {
-                    if(!in_array($adjacentNode->getDeviceTo(), $result)){
-                        $result[] = $adjacentNode->getDeviceTo();
-                        $latency[] = $adjacentNode->getLatency();
-                        $networkInfo = $this->networkPathInfoCollection->findDeviceFrom($adjacentNode->getDeviceTo());
-                        return $this->traverseTheGraph($networkInfo, $latency, $result);
-                    }
-                }
-            }
-
-            array_pop($latency);
-            array_pop($result);
-
-            if (count($latency) > 0 && count($result) > 0){
-                echo " Getting network info for ".$result[count($result) - 1].PHP_EOL;
-                $networkInfo = $this->networkPathInfoCollection->findDeviceFrom($result[count($result) - 1]);
-                // print_r($networkInfo);
-                foreach ($networkInfo->getDeviceTo() as $nwInfo) {
-                    echo " setting back tracking node to not visited => [".$nwInfo->getDeviceFrom().",".$nwInfo->getDeviceTo()."]".PHP_EOL;
-                    $nwInfo->setVisited(0);
-                }
-
-                print_r($networkInfo);
-                return $this->traverseTheGraph($networkInfo, $latency, $result);
-            }
-        }
-        echo sprintf('%s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
-        return self::MESSAGE_PATH_NOT_FOUND;
-    }
     /**
      * @param $deviceFrom
      * @param $deviceTo
@@ -208,21 +176,17 @@ class NetworkPathService
      */
     private function addToCollection($deviceFrom, $deviceTo, $latency): void
     {
-        //$adjacentNetworkInfoArray = $this->networkPathInfoCollection->getAdjacentNodeHash();
-
         $hashKey = $this->getHashKey([$deviceFrom, $deviceTo]);
-//        $adjacentNetworkInfo = (isset($adjacentNetworkInfoArray) &&
-//            array_key_exists($hashKey, $adjacentNetworkInfoArray)) ?
-//            $adjacentNetworkInfoArray[$hashKey] : null;
+        $adjacentNetworkInfo = $this->networkPathInfoCollection->getAdjacentNodeInfoFromHash($hashKey);
 
-        //if(empty($adjacentNetworkInfo)) {
+        if(empty($adjacentNetworkInfo)) {
             $adjacentNetworkInfo = $this->createAdjacentNetworkInfo(
                 $hashKey,
                 $deviceFrom,
                 $deviceTo,
                 $latency
             );
-        //}
+        }
 
         $networkInfo = $this->networkPathInfoCollection->findDeviceFrom($deviceFrom);
 
@@ -248,20 +212,6 @@ class NetworkPathService
     }
 
     /**
-     * @param string $networkNode
-     * @param AdjacentNetworkPathInfo $adjacentNetworkPathInfo
-     * @return string
-     */
-    private function getAdjacentNode(
-        string $networkNode,
-        AdjacentNetworkPathInfo $adjacentNetworkPathInfo
-    ): string {
-        return $adjacentNetworkPathInfo->getDeviceTo();
-//        $networkNode === $adjacentNetworkPathInfo->getDeviceTo() ?
-//            $adjacentNetworkPathInfo->getDeviceFrom() : $adjacentNetworkPathInfo->getDeviceTo();
-    }
-
-    /**
      * @param string $hashKey
      * @param string $deviceFrom
      * @param string $deviceTo
@@ -279,7 +229,8 @@ class NetworkPathService
         $adjacentNetworkInfo->setDeviceTo($deviceTo);
         $adjacentNetworkInfo->setLatency($latency);
         $adjacentNetworkInfo->setVisited(0);
-        //$this->networkPathInfoCollection->addToAdjacentNodeHash($hashKey, $adjacentNetworkInfo);
+        $adjacentNetworkInfo->setHashKey($hashKey);
+        $this->networkPathInfoCollection->addToAdjacentNodeHash($hashKey, $adjacentNetworkInfo);
 
         return $adjacentNetworkInfo;
     }
@@ -288,17 +239,19 @@ class NetworkPathService
      * @param string $inputValue
      * @return bool
      */
-    public function setUpInputParameters(string $inputValue): bool
+    public function setUpInputParameters(?string $inputValue): bool
     {
-        $inputNetworkInfo = explode(" ", strtoupper($inputValue));
+        if(!empty($inputValue)){
+            $inputNetworkInfo = explode(" ", strtoupper($inputValue));
 
-        if(!empty($inputNetworkInfo) && count($inputNetworkInfo) === 3)
-        {
-            $this->deviceFrom = $inputNetworkInfo[0];
-            $this->deviceTo = $inputNetworkInfo[1];
-            $this->latency = $inputNetworkInfo[2];
+            if(!empty($inputNetworkInfo) && count($inputNetworkInfo) === 3)
+            {
+                $this->deviceFrom = $inputNetworkInfo[0];
+                $this->deviceTo = $inputNetworkInfo[1];
+                $this->latency = $inputNetworkInfo[2];
 
-            return true;
+                return true;
+            }
         }
 
         return false;
