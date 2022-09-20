@@ -51,7 +51,7 @@ class NetworkPathCommand extends Command
                 $helper = $this->getHelper('question');
                 $question = new Question('Input: ');
                 $question->setValidator(function ($answer) {
-                    if(!empty($answer) && strcasecmp($answer, 'QUIT') == 0){
+                    if(!empty($answer) && strcasecmp($answer, 'QUIT') === 0){
                         return $answer;
                     }
                     if (empty($answer) || count(explode(" ", strtoupper($answer))) !== 3) {
@@ -63,10 +63,12 @@ class NetworkPathCommand extends Command
                 });
                 $inputValue = $helper->ask($input, $output, $question);
 
-                $this->networkPathService->setUpInputParameters($inputValue);
-                $result = $this->networkPathService->evaluateNetworkPath();
-                $output->writeln('Output: '.$result);
-            } while(strcasecmp($inputValue, 'QUIT') != 0);
+                if(strcasecmp($inputValue, 'QUIT') !== 0){
+                    $this->networkPathService->setUpInputParameters($inputValue);
+                    $result = $this->networkPathService->evaluateNetworkPath();
+                    $output->writeln('Output: '.$result);
+                }
+            } while(strcasecmp($inputValue, 'QUIT') !== 0);
 
             $output->writeln('Ending command....');
             return Command::SUCCESS;
