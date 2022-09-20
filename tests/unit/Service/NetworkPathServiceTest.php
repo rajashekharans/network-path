@@ -15,7 +15,8 @@ class NetworkPathServiceTest extends TestCase
     {
         $networkPathInfoCollection = new NetworkPathInfoCollection();
         $networkPathService = new NetworkPathService($networkPathInfoCollection);
-        $networkPathService->createNetworkPathCollection(__DIR__ .'../../../Fixtures/test.csv');
+        $filePath = dirname(__FILE__) . '/Fixtures/test.csv';
+        $networkPathService->createNetworkPathCollection($filePath);
 
         $actualResult = $networkPathInfoCollection->findDeviceFrom('A');
 

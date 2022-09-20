@@ -52,6 +52,11 @@ class NetworkPathService
     public function createNetworkPathCollection(string $filePath): void
     {
         try {
+            if(!file_exists($filePath)) {
+                throw new \RuntimeException(
+                    'Cannot open the file at given path.'
+                );
+            }
             if (($fp = fopen($filePath, "r")) !== FALSE) {
 
                 while (($row = fgetcsv($fp, self::MAX_ROW_LENGTH, self::FILE_DELIMITER)) !== FALSE) {
@@ -75,7 +80,7 @@ class NetworkPathService
                 fclose($fp);
             }
         } catch (Exception $exception) {
-           echo ("Exception Occurred".$exception->getMessage());
+           throw $exception;
         }
     }
 
