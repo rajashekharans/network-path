@@ -101,11 +101,18 @@ class NetworkPathInfoCollection
     public function printNetworkInfoCollection(): void
     {
         foreach($this->networkPathCollection as $node) {
-            echo $node->getDeviceFrom() . " -> ";
             foreach($node->getDeviceTo() as $neighbour) {
-                echo " [ ".$neighbour->getDeviceFrom(). ", ". $neighbour->getDeviceTo(). ", ". $neighbour->getLatency(). ", ". $neighbour->isVisited()."[".$this->getAdjacentNode($node->getDeviceFrom(), $neighbour)."]]";
+                echo (
+                    sprintf("%s => [ %s, %s, %s, %s, [%s]]",
+                        $node->getDeviceFrom(),
+                        $neighbour->getDeviceFrom(),
+                        $neighbour->getDeviceTo(),
+                        $neighbour->getLatency(),
+                        $neighbour->isVisited(),
+                        $this->getAdjacentNode($node->getDeviceFrom(), $neighbour)
+                    )
+                ).PHP_EOL;
             }
-            echo PHP_EOL;
         }
     }
 }

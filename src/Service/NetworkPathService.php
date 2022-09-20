@@ -111,7 +111,7 @@ class NetworkPathService
      * @param $result
      * @return string
      */
-    public function traverseTheGraph($networkInfo, $latency, $result): string
+    private function traverseTheGraph($networkInfo, $latency, $result): string
     {
         if (!empty($networkInfo)){
             foreach($networkInfo->getDeviceTo() as $adjacentNetworkInfo){//C,b,e
@@ -153,7 +153,6 @@ class NetworkPathService
 
             if (count($latency) > 0 && count($result) > 0){
                 $networkInfo = $this->networkPathInfoCollection->findDeviceFrom($result[count($result) - 1]);
-                $this->networkPathInfoCollection->printNetworkInfoCollection();
                 return $this->traverseTheGraph($networkInfo, $latency, $result);
             }
         }
