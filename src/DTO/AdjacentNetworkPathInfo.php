@@ -1,7 +1,9 @@
 <?php
 
 namespace NetworkPath\DTO;
-
+/**
+ * Class to store information about device neighbours
+ */
 class AdjacentNetworkPathInfo
 {
     /**

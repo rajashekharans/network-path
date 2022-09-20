@@ -10,7 +10,7 @@ use \Exception;
 class NetworkPathService
 {
     private const MAX_ROW_LENGTH = 250;
-    private const FILE_DELIMITOR = ",";
+    private const FILE_DELIMITER = ",";
     private const COLUMN_DEVICE_FROM = 0;
     private const COLUMN_DEVICE_TO = 1;
     private const COLUMN_LATENCY = 2;
@@ -54,7 +54,7 @@ class NetworkPathService
         try {
             if (($fp = fopen($filePath, "r")) !== FALSE) {
 
-                while (($row = fgetcsv($fp, self::MAX_ROW_LENGTH, self::FILE_DELIMITOR)) !== FALSE) {
+                while (($row = fgetcsv($fp, self::MAX_ROW_LENGTH, self::FILE_DELIMITER)) !== FALSE) {
                     if (count($row) < 3) {
                         //skip the row, if row has less than three columns
                         continue;
@@ -72,14 +72,11 @@ class NetworkPathService
                         $row[self::COLUMN_LATENCY]
                     );
                 }
-
-                $this->networkPathInfoCollection->printNetworkInfoCollection();
                 fclose($fp);
             }
         } catch (Exception $exception) {
            echo ("Exception Occurred".$exception->getMessage());
         }
-
     }
 
     /**
@@ -91,12 +88,14 @@ class NetworkPathService
         $latency[] = null;
         $result[] = $this->deviceFrom;
 
+        //Setting all paths as not visited
         foreach ($this->networkPathInfoCollection->getCollection() as $adj) {
             foreach ($adj->getDeviceTo() as $nwInfo) {
                 $nwInfo->setVisited(false);
             }
         }
 
+        //Visit the source device
         $networkInfo = $this->networkPathInfoCollection->findDeviceFrom($this->deviceFrom);
         if (!empty($networkInfo)) {
             return $this->traverseTheGraph($networkInfo, $latency, $result);
@@ -114,34 +113,29 @@ class NetworkPathService
      */
     public function traverseTheGraph($networkInfo, $latency, $result): string
     {
-        $this->networkPathInfoCollection->printNetworkInfoCollection();
         if (!empty($networkInfo)){
-
             foreach($networkInfo->getDeviceTo() as $adjacentNetworkInfo){//C,b,e
-
-                $adjacentNode = $this->networkPathInfoCollection->getAdjacentNode($networkInfo->getDeviceFrom(), $adjacentNetworkInfo);
-                echo "Checking ". $adjacentNode.PHP_EOL;
+                $adjacentNode = $this->networkPathInfoCollection
+                    ->getAdjacentNode($networkInfo->getDeviceFrom(), $adjacentNetworkInfo);
                 if ($adjacentNetworkInfo->isVisited()){
-                    echo "Already visited Skipping node => ".$adjacentNode.PHP_EOL;
                     continue;
                 }
                 $adjacentNetworkInfo->setVisited(true);
                 if(!in_array($adjacentNode, $result)) {
-                    echo "Adding the node ".$adjacentNode.PHP_EOL;
                     $latency[] = $adjacentNetworkInfo->getLatency();
                     $result[] = $adjacentNode;
-                    echo sprintf('After adding the node %s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
                     if ($adjacentNode == $this->deviceTo) {
                         if (array_sum($latency) <= $this->latency) {
                             return sprintf('%s => %s', implode(' => ', $result), array_sum($latency));
                         }
                     } else {
-                        echo " Getting network info for =>=> ".$adjacentNode.PHP_EOL;
-                        if(array_sum($latency) >= $this->latency){
-                            echo sprintf('+++Before popping %s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
+                        /*
+                         * If latency of the path covered is greater than desired latency,
+                         * we are on wrong path, back track one node and traverse again
+                         */
+                        if (array_sum($latency) >= $this->latency){
                             array_pop($latency);
                             array_pop($result);
-                            echo sprintf('+++++After popping %s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
 
                             $adjacentNode = $result[count($result) - 1];
                         }
@@ -150,21 +144,19 @@ class NetworkPathService
                     }
                 }
             }
-            echo " ???????????????????".PHP_EOL;
-            $this->networkPathInfoCollection->printNetworkInfoCollection();
-            echo sprintf('Before popping %s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
+
+            /*
+             * If reached the depth, back track and traverse again
+             */
             array_pop($latency);
             array_pop($result);
-            echo sprintf('After popping %s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
 
             if (count($latency) > 0 && count($result) > 0){
-                echo " Getting network info for ".$result[count($result) - 1].PHP_EOL;
                 $networkInfo = $this->networkPathInfoCollection->findDeviceFrom($result[count($result) - 1]);
                 $this->networkPathInfoCollection->printNetworkInfoCollection();
                 return $this->traverseTheGraph($networkInfo, $latency, $result);
             }
         }
-        //echo sprintf('%s => %s', implode(' => ', $result), array_sum($latency)).PHP_EOL;
         return self::MESSAGE_PATH_NOT_FOUND;
     }
 
@@ -236,7 +228,7 @@ class NetworkPathService
     }
 
     /**
-     * @param string $inputValue
+     * @param string|null $inputValue
      * @return bool
      */
     public function setUpInputParameters(?string $inputValue): bool
@@ -244,8 +236,7 @@ class NetworkPathService
         if(!empty($inputValue)){
             $inputNetworkInfo = explode(" ", strtoupper($inputValue));
 
-            if(!empty($inputNetworkInfo) && count($inputNetworkInfo) === 3)
-            {
+            if(!empty($inputNetworkInfo) && count($inputNetworkInfo) === 3) {
                 $this->deviceFrom = $inputNetworkInfo[0];
                 $this->deviceTo = $inputNetworkInfo[1];
                 $this->latency = $inputNetworkInfo[2];

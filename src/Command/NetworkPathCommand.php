@@ -11,12 +11,14 @@ use Symfony\Component\Console\Question\Question;
 
 class NetworkPathCommand extends Command
 {
-
     /**
      * @var NetworkPathService
      */
     private $networkPathService;
 
+    /**
+     * @param NetworkPathService $networkPathService
+     */
     public function __construct(NetworkPathService $networkPathService)
     {
         parent::__construct();
@@ -24,40 +26,52 @@ class NetworkPathCommand extends Command
         $this->networkPathService = $networkPathService;
     }
 
+    /**
+     * @return void
+     */
     protected function configure(): void
     {
         $this
-            ->setName('app:run')
-            ->addArgument('filename', InputArgument::REQUIRED,'Set the path of csv containing network path info')
-            ->setDescription('Runs Network Path Test');
+            ->setName('nw-path-test')
+            ->addArgument('filepath', InputArgument::REQUIRED,'Set the path of csv containing network path info')
+            ->setDescription('Runs Network Path Test ( nw-path-test <filepath> )');
     }
 
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     * @return int
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if(!empty($input->getArgument('filename'))){
-            $this->networkPathService->createNetworkPathCollection($input->getArgument('filename'));
+        if(!empty($input->getArgument('filepath'))){
+            $this->networkPathService->createNetworkPathCollection($input->getArgument('filepath'));
 
-            $helper = $this->getHelper('question');
-            $question = new Question('Input: ');
-            $inputValue = $helper->ask($input, $output, $question);
-            while (strtolower($inputValue) != 'quit') {
-                $validationResult = $this->networkPathService->setUpInputParameters($inputValue);
-                if($validationResult) {
-                    $result = $this->networkPathService->evaluateNetworkPath();
-                    $output->writeln('Output: '.$result);
-                } else {
-                    $output->writeln('Output: Input error... Syntax:"[from] [to] [latency]", type "QUIT" to terminate command.');
-                }
-
+            do {
+                $helper = $this->getHelper('question');
                 $question = new Question('Input: ');
+                $question->setValidator(function ($answer) {
+                    if(!empty($answer) && strcasecmp($answer, 'QUIT') == 0){
+                        return $answer;
+                    }
+                    if (empty($answer) || count(explode(" ", strtoupper($answer))) !== 3) {
+                        throw new \RuntimeException(
+                          ' Output: Input error... Syntax:"[from] [to] [latency]", type "QUIT" to terminate command.'
+                        );
+                    }
+                    return $answer;
+                });
                 $inputValue = $helper->ask($input, $output, $question);
-            }
+
+                $this->networkPathService->setUpInputParameters($inputValue);
+                $result = $this->networkPathService->evaluateNetworkPath();
+                $output->writeln('Output: '.$result);
+            } while(strcasecmp($inputValue, 'QUIT') != 0);
+
             $output->writeln('Ending command....');
             return Command::SUCCESS;
         }
 
-
         return Command::FAILURE;
     }
-
 }

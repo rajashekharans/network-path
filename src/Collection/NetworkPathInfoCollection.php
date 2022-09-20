@@ -5,6 +5,9 @@ namespace NetworkPath\Collection;
 use NetworkPath\DTO\AdjacentNetworkPathInfo;
 use NetworkPath\DTO\NetworkPathInfo;
 
+/**
+ * Devices and its path are stored as adjacency list
+ */
 class NetworkPathInfoCollection
 {
     /**
@@ -50,11 +53,20 @@ class NetworkPathInfoCollection
         return null;
     }
 
+    /**
+     * @param string $hashKey
+     * @param AdjacentNetworkPathInfo $adjacentNetworkInfo
+     * @return void
+     */
     public function addToAdjacentNodeHash(string $hashKey, AdjacentNetworkPathInfo $adjacentNetworkInfo)
     {
         $this->adjacentNetworkPathInfoCollection[$hashKey] = $adjacentNetworkInfo;
     }
 
+    /**
+     * @param string $hashKey
+     * @return AdjacentNetworkPathInfo|null
+     */
     public function getAdjacentNodeInfoFromHash(string $hashKey): ?AdjacentNetworkPathInfo
     {
         return (isset($this->adjacentNetworkPathInfoCollection) &&
@@ -62,6 +74,9 @@ class NetworkPathInfoCollection
             $this->adjacentNetworkPathInfoCollection[$hashKey] : null;
     }
 
+    /**
+     * @return AdjacentNetworkPathInfo[]
+     */
     public function getAdjacentNodeArray(): array
     {
         return $this->adjacentNetworkPathInfoCollection;
@@ -80,6 +95,9 @@ class NetworkPathInfoCollection
             $adjacentNetworkPathInfo->getDeviceFrom() : $adjacentNetworkPathInfo->getDeviceTo();
     }
 
+    /**
+     * @return void
+     */
     public function printNetworkInfoCollection(): void
     {
         foreach($this->networkPathCollection as $node) {

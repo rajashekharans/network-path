@@ -2,6 +2,9 @@
 
 namespace NetworkPath\DTO;
 
+/**
+ * Class to store Device Info
+ */
 class NetworkPathInfo
 {
     /**
@@ -45,5 +48,4 @@ class NetworkPathInfo
     {
         $this->deviceTo[] = $deviceTo;
     }
-
 }
