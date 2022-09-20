@@ -12,9 +12,6 @@
     <env name="APP_DEBUG" value="1"/>
   </php>
   <testsuites>
-    <testsuite name="Integration Test Suite">
-      <directory>tests/Integration/</directory>
-    </testsuite>
     <testsuite name="Unit Test Suite">
       <directory>tests/Unit</directory>
     </testsuite>

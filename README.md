@@ -9,8 +9,8 @@
 1. Clone the repo `git clone git@github.com:rajashekharans/network-path.git`
 1. `cd network-path`
 1. Run `composer install`, to install dependencies
-1. To run the application, `php bin\console nw-path-test <filepath>`
-1. To run tests, `vendor\bin\phpunit`
+1. To run the application, `php bin/console nw-path-test <filepath>`
+1. To run tests, `vendor/bin/phpunit`
 
 ## Technical Overview
 Network Path Test is symfony console command application. It uses pimple container for dependency injection.
