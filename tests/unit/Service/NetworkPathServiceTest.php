@@ -1,6 +1,7 @@
 <?php
 
 namespace NetworkPath\Tests\Unit\Service;
+
 use NetworkPath\Collection\NetworkPathInfoCollection;
 use NetworkPath\DTO\AdjacentNetworkPathInfo;
 use NetworkPath\DTO\NetworkPathInfo;
@@ -9,6 +10,24 @@ use PHPUnit\Framework\TestCase;
 
 class NetworkPathServiceTest extends TestCase
 {
+
+    public function testCreatePath()
+    {
+        $networkPathInfoCollection = new NetworkPathInfoCollection();
+        $networkPathService = new NetworkPathService($networkPathInfoCollection);
+        $networkPathService->createNetworkPathCollection(__DIR__ .'../../../Fixtures/test.csv');
+
+        $actualResult = $networkPathInfoCollection->findDeviceFrom('A');
+
+        $this->assertEquals('A', $actualResult->getDeviceFrom());
+        $this->assertEquals('A', $actualResult->getDeviceTo()[0]->getDeviceFrom());
+        $this->assertEquals('B', $actualResult->getDeviceTo()[0]->getDeviceTo());
+        $this->assertEquals(10, $actualResult->getDeviceTo()[0]->getLatency());
+        $this->assertEquals('A', $actualResult->getDeviceTo()[1]->getDeviceFrom());
+        $this->assertEquals('C', $actualResult->getDeviceTo()[1]->getDeviceTo());
+        $this->assertEquals(20, $actualResult->getDeviceTo()[1]->getLatency());
+    }
+
     public function testSetUpInputParametersValidInputReturnTrue()
     {
         $networkPathInfoCollection = new NetworkPathInfoCollection();

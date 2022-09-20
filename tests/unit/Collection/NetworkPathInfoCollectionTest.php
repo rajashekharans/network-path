@@ -1,6 +1,6 @@
 <?php
 
-namespace NetworkPath\Tests\Unit;
+namespace NetworkPath\Tests\Unit\Collection;
 
 use NetworkPath\Collection\NetworkPathInfoCollection;
 use NetworkPath\DTO\AdjacentNetworkPathInfo;
